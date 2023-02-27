@@ -1,0 +1,20 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config CANUTILS_CANLOOPBACK
+	tristate "SocketCAN canloopback tool"
+	default n
+	depends on NET_CAN
+        select CANUTILS_LIBCANUTILS
+	---help---
+		Enable the SocketCAN canloopback tool
+
+if CANUTILS_CANLOOPBACK
+
+config CANUTILS_CANLOOPBACK_STACKSIZE
+	int "SocketCAN canloopback stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif
