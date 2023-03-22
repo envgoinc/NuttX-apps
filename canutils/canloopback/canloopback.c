@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	}
 
 	/* open socket */
-	s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+	s = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW);
 	if (s < 0) {
 		perror("socket");
 		return 1;
@@ -170,20 +170,27 @@ int main(int argc, char **argv)
 
 		// Try to read.
 		struct can_frame receive_msg;
-		const ssize_t nbytes = read(s, &receive_msg, sizeof(receive_msg));
+		const ssize_t nbytes = recv(s, &receive_msg, sizeof(receive_msg), 0);
 		//printf("read: 0x%lx, \n", receive_msg.can_id);
 
-		if (nbytes < 0 || (size_t)nbytes > sizeof(receive_msg)) {
+		if(nbytes < 0) {
+			if(errno != EAGAIN) {
+				printf("returned %d, errno: 0x%x\n", nbytes, errno);
+			}
+		}
+		else if((size_t)nbytes > sizeof(receive_msg)) {
 			// error - todo - could this happen if we read in the middle of a packet receive?
 			printf("error on receive. Bytes read: %d\n", nbytes);
-		} else {
+		}
+		else {
 			// send what was received
-			//printf("send 0x%lx\n", receive_msg.can_id);
+			// printf("received 0x%lx\n", receive_msg.can_id);
 			if (write(s, &receive_msg, sizeof(receive_msg)) != sizeof(receive_msg)) {
 				perror("write");
 				return 1;
 			}
 		}
+		usleep(3000);
 
 #if 0
 		// File desriptor for CAN.
